@@ -69,14 +69,12 @@ export default {
         })
     },
     createVaultKeep({ commit, dispatch, state }) {
-      debugger
       let vaultKeep = {
         vaultId: state.vault.id,
         keepId: state.keep.id
       }
       utils.api.post('vaultkeeps', vaultKeep)
         .then(res => {
-          debugger
           commit('setVKState', 'canCreateVK')
           commit('setVaultKeep', vaultKeep)
           dispatch('getVaultKeeps')
