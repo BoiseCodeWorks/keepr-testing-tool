@@ -178,7 +178,7 @@
         this.$store.dispatch('createVault', this.testVault)
       },
       testVaultKeeps() {
-        this.$store.dispatch('createVaultKeep')
+        this.$store.dispatch('getKeep')
       },
       logout() {
         this.$store.dispatch('logout')
