@@ -1,38 +1,44 @@
 <template>
-  <div class="keepTests col-6 offset-lg-3 my-4">
-
-    <div class="card" v-for="test in tests" :class="[test.success ? 'border-success' : 'border-danger']">
-      <h4>{{test.name}}</h4>
-      <p v-for="(value, key) in test.routeInfo">{{key.toUpperCase()}}: {{value}}</p>
+  <div class="keepTests col-10 col-lg-6 mx-auto p-1 rounded mb-2">
+    <div
+      class="card mb-1"
+      v-for="test in tests"
+      :class="[test.success ? 'border-success' : 'border-danger']"
+      :key="test.name"
+    >
+      <div class="card-header text-light" :class="[test.success ? 'bg-success' : 'bg-danger']">
+        <h4>{{test.name}}</h4>
+      </div>
+      <div class="card-body">
+        <p v-for="(value, key) in test.routeInfo" :key="key">{{key.toUpperCase()}}: {{value}}</p>
+      </div>
     </div>
   </div>
 </template>
 
 <script>
-  export default {
-    name: "keepTests",
-    props: ["tests"],
-    data() {
-      return {}
-    },
-    computed: {
-    },
-    methods: {},
-    components: {}
-  }
+export default {
+  name: "keepTests",
+  props: ["tests"],
+  data() {
+    return {};
+  },
+  computed: {},
+  methods: {},
+  components: {}
+};
 </script>
 
 <style>
-  /* .red {
+/* .red {
     /* background-color: #ff8b54; */
-  /* } */
+/* } */
 
-  /* .green {
+/* .green {
     /* background-color: #50cf61; */
-  /* }  */
+/* }  */
 
-  .card {
-    font-weight: bold;
-
-  }
+.card {
+  font-weight: bold;
+}
 </style>

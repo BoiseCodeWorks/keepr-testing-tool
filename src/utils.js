@@ -1,13 +1,13 @@
 import axios from 'axios'
 
 let api = axios.create({
-  baseURL: 'http://localhost:5000/api',
+  baseURL: '/api',
   timeout: 5000,
   withCredentials: true
 })
 
 let auth = axios.create({
-  baseURL: 'http://localhost:5000/account',
+  baseURL: '/account',
   timeout: 5000,
   withCredentials: true
 })
