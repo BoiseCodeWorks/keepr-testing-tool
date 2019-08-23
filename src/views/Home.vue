@@ -7,7 +7,7 @@
 
         <h1>Keepr Testing Tool</h1>
         <button @click="readMe = !readMe" class="clickable btn btn-danger my-2 mx-1">Read Me</button>
-        <div v-if="readMe" class="card">
+        <div v-if="readMe" class="card border-warning">
           <div class="card-body readMeSection text-left">
             <h3><span @click="openTests">Welcome</span> to the Keepr Testing Tool. </h3>
             <p></p>This tool is designed to test very specific routes in your application's backend. <strong>If your
@@ -43,7 +43,7 @@
         </div>
 
         <button @click="seeUrl = !seeUrl" class="btn btn-danger my-2">View Base URLs</button>
-        <div class="card urls" v-if="seeUrl">
+        <div class="card urls border-warning" v-if="seeUrl">
           <div class="card-body">
             <p>Auth Base URL: http://localhost:5000/account</p>
             <p>All Other Tests Base URL: http://localhost:5000/api</p>
@@ -196,11 +196,11 @@
 </script>
 <style>
   body {
-    background-color: #beeef7;
-    background-image: url("https://www.transparenttextures.com/patterns/brushed-alum-dark.png");
+    /* background-color: #beeef7; */
+    /* background-image: url("https://www.transparenttextures.com/patterns/brushed-alum-dark.png"); */
     font-family: 'Alice', serif;
-    color: white !important;
-    text-shadow: -1px -1px black;
+    /* color: white !important; */
+    /* text-shadow: -1px -1px black; */
 
 
   }
@@ -216,12 +216,12 @@
     text-shadow: -1px -1px black;
   }
 
-  .readMeSection,
+  /* .readMeSection,
   .urls {
     background-color: #ff8b54;
-    /* background-image: url("https://www.transparenttextures.com/patterns/crisp-paper-ruffles.png"); */
-    /* This is mostly intended for prototyping; please download the pattern and re-host for production environments. Thank you! */
-  }
+    background-image: url("https://www.transparenttextures.com/patterns/crisp-paper-ruffles.png");
+    This is mostly intended for prototyping; please download the pattern and re-host for production environments. Thank you!
+  } */
 
 
 
