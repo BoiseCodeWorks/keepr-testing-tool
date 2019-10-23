@@ -2,8 +2,12 @@ import Vue from 'vue'
 import App from './App.vue'
 import router from './router'
 import store from './store'
+import ApiTester from "@bcwdev/vue-api-tester"
+import "./tests/SuiteLoader"
 
-Vue.config.productionTip = false
+
+ApiTester.install(Vue, { router })
+
 
 new Vue({
   router,
