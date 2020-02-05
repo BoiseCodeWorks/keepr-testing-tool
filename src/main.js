@@ -3,11 +3,8 @@ import App from './App.vue'
 import router from './router'
 import store from './store'
 import ApiTester from "@bcwdev/vue-api-tester"
-import "./tests/SuiteLoader"
-
 
 ApiTester.install(Vue, { router })
-
 
 new Vue({
   router,
