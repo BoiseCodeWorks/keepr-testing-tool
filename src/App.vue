@@ -1,21 +1,27 @@
 <template>
   <div id="app">
-    <div id="nav">
-    </div>
+    <auth0config />
     <router-view />
   </div>
 </template>
 
+<script>
+import auth0config from "./components/Auth0Config";
+export default {
+  name: "App",
+  components: {
+    auth0config
+  }
+};
+</script>
+
 <style>
-  #nav {
-    padding: 30px;
-  }
-
-  #nav a {
-    color: #2c3e50;
-  }
-
-  #nav a.router-link-exact-active {
-    color: #42b983;
-  }
+html,
+body {
+  background: whitesmoke;
+}
+.action {
+  cursor: pointer;
+  user-select: none;
+}
 </style>
