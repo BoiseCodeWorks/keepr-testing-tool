@@ -1,42 +1,76 @@
-import { Suite, Test } from "@bcwdev/vue-api-tester"
+import { Test } from "@bcwdev/vue-api-tester"
+import { UtilitySuite } from "./UtilitySuite"
 
-const PATH = "/api/keeps"
+const PATH = "https://localhost:5001/api/keeps"
 
-export class KeepsSuite extends Suite {
+let keepObj = {
+  name: "TEST__KEEP",
+  description: "KEEP__DESCRIPTION",
+  img: "//placehold.it/200x200",
+  isPrivate: false,
+  shares: 0,
+  views: 0,
+  keeps: 0
+}
+
+
+export class KeepsSuite extends UtilitySuite {
   constructor() {
     super("Keeps Testing", PATH)
     this.addTests(
       new Test({
-        name: "Can Get keeps",
+        name: 'Can Create a keep',
         path: PATH,
-        description: 'GET request. This should get a list of keeps.',
-        expected: "Keep[]"
-      },
-        async () => {
-          this.keeps = await this.get()
-          if (!Array.isArray(this.keeps)) {
-            return this.unexpected([], this.keeps)
-          }
-          return this.pass("Able to get keeps", this.keeps)
-        },
-      ),
-      new Test({
-        name: 'Can Create keeps',
-        path: PATH,
-        description: 'POST request. This should create a new keep in your database. UserId is attached on the server',
+        description: 'POST request. This should create a new keep in your database. UserId is attached on the server side',
         expected: 'Keep',
         payload: 'Keep object {name, description, img, isPrivate}'
       },
         async () => {
-          let result = await this.create({
-            name: "TEST__KEEP",
-            description: "KEEP__DESCRIPTION",
-            img: "//placehold.it/200x200",
-            isPrivate: false
-          })
-          this.TESTKEEP = result
-          return this.pass("Successfully created value ", result)
+          let keep
+          try {
+            let user = await this.CheckUser()
+            keep = await this.create({ ...keepObj, userId: "dont trust the front end" })
+            this.verifyIsSame(keepObj, keep)
+            if (keep.userId != user.id) {
+              return this.fail("Users can create a keep with any user id.")
+            }
+            return this.pass("Successfully created a keep!", keep)
+          } catch (e) {
+            return this.unexpected(keepObj, this.handleError(e))
+          } finally {
+            if (keep) {
+              await this.delete(keep.id)
+            }
+          }
         }
+      ),
+      new Test({
+        name: "Can Get Public Keeps",
+        path: PATH,
+        description: 'GET request. This should get a list of public keeps.',
+        expected: "Keep[]"
+      },
+        async () => {
+          let keeps
+          try {
+            let user = await this.CheckUser()
+            let keep = await this.create(keepObj)
+            this.switchUser()
+            keeps = await this.get()
+            if (keeps.length == 0) {
+              return this.fail('Please add at least one keep to test this route.')
+            }
+            else if (!keeps.every(k => !k.isPrivate || k.userId == user.id)) {
+              return this.fail("Able to retrieve private keeps that do not belong to the user.")
+            }
+            else if (!this.verifyIsSame(keepObj, keeps[0])) {
+              return this.fail("Array does not contain objects that match the given Keep model")
+            }
+            return this.pass("Able to get keeps", keeps.splice(0, 3))
+          } catch (e) {
+            return this.unexpected([keepObj], this.handleError(e))
+          }
+        },
       ),
       new Test({
         name: 'Can Get keep by Id',
@@ -45,11 +79,21 @@ export class KeepsSuite extends Suite {
         expected: 'Keep'
       },
         async () => {
-          let result = await this.getById(this.TESTKEEP.id)
-          if (this.TESTKEEP.id != result.id) {
-            return this.unexpected(this.TESTKEEP, result)
+          let keeps
+          let keep
+          try {
+            keeps = await this.get()
+            if (keeps.length == 0) {
+              return this.fail('Please add at least one keep to test this route.')
+            }
+            keep = await this.getById(keeps[0].id)
+            if (keeps[0].id != keep.id) {
+              return this.fail("Could not retrieve the keep by its Id.")
+            }
+            return this.pass("Retrieved Keep by Id", keep)
+          } catch (e) {
+            return this.unexpected(keepObj, this.handleError(e))
           }
-          return this.pass("Retrieved Keep by Id", this.TESTKEEP)
         },
       ),
       new Test({
@@ -60,14 +104,27 @@ export class KeepsSuite extends Suite {
         payload: "Keep"
       },
         async () => {
-          this.TESTKEEP.name = "TEST_KEEP_EDITIED"
-          let result = await this.update(this.TESTKEEP.id)
-          if (this.TESTKEEP.name != result.name) {
-            let test = this.unexpected(this.TESTKEEP, result)
-            test.message = "Unable to edit keep by id"
-            return test
+          let keep
+          let updatedKeep
+          try {
+            let newKeep = { ...keepObj }
+            let user = await this.get('https://localhost:5001/account/authenticate')
+            keep = await this.create(newKeep)
+            let editedKeep = { ...keep }
+            editedKeep.name = "edited keep"
+            await this.update(editedKeep)
+            updatedKeep = await this.getById(editedKeep.id)
+            if (updatedKeep.name != editedKeep.name) {
+              return this.fail("Could not edit the keep.")
+            }
+            return this.pass("Successfully edited the keep!", updatedKeep)
+          } catch (e) {
+            return this.unexpected(keepObj, this.handleError(e))
+          } finally {
+            if (keep) {
+              await this.delete(keep.id)
+            }
           }
-          return this.pass("Keep was edited by id", result)
         },
       ),
       new Test({
@@ -77,15 +134,40 @@ export class KeepsSuite extends Suite {
         expected: 'Keep'
       },
         async () => {
-          let keep = await this.create({
-            name: "TEST__KEEP__DELETABLE",
-            description: "KEEP__DESCRIPTION_SHOULD_GET_DELETED",
-            img: "//placehold.it/200x200",
-            isPrivate: false
-          })
-          let deleteRequest = await this.delete(keep.id)
+          let userOne
+          let userTwo
+          let keep
           try {
-            let getByIdRequest = await this.getById(keep.id)
+            userOne = JSON.parse(localStorage.getItem('user'))
+            if (!userOne) {
+              return this.fail("Please run the Login test first.")
+            }
+            keep = await this.create({
+              name: "TEST__KEEP__DELETABLE",
+              description: "KEEP__DESCRIPTION_SHOULD_GET_DELETED",
+              img: "//placehold.it/200x200",
+              isPrivate: false
+            })
+            await this.delete('logout', 'https://localhost:5001/account')
+            let users = JSON.parse(localStorage.getItem('users'))
+            let index = Math.floor(Math.random() * users.length)
+            userTwo = users[index]
+            userTwo["username"] = `${userTwo.name} ${userTwo.surname}`
+            users.splice(index, 1)
+            localStorage.setItem('users', JSON.stringify(users))
+            await this.create(userTwo, 'https://localhost:5001/account/register')
+          } catch (e) {
+            return this.unexpected(keep, e.response.data)
+          }
+          try {
+            await this.delete(keep.id)
+            return this.unexpected("Unable to delete keep", 'Users able to delete a keep they do not own.')
+          } catch (e) { }
+          try {
+            await this.create(userOne, 'https://localhost:5001/account/login')
+            await this.delete(keep.id)
+            let unDeletedKeep = await this.getById(keep.id)
+            return this.fail
           } catch (e) {
             return this.pass("Sucessfully removed keep by it's Id", keep)
           }
@@ -98,14 +180,26 @@ export class KeepsSuite extends Suite {
         expected: 'Keep'
       },
         async () => {
-          let keep = await this.create({
-            name: "TEST__KEEP__PRIVATE",
-            description: "KEEP__SHOULD_BE_PRIVATE",
-            img: "//placehold.it/200x200",
-            isPrivate: true
-          })
+          let keep
+          try {
+            keep = await this.create({
+              name: "TEST__KEEP__PRIVATE",
+              description: "KEEP__SHOULD_BE_PRIVATE",
+              img: "//placehold.it/200x200",
+              isPrivate: true
+            })
+            if (!keep.isPrivate) {
+              return this.fail("Could not make a private keep")
+            }
+            return this.pass("Able to create private keeps", keep)
+          } catch (e) {
+            return this.unexpected(keep, this.handleError(e))
+          }
+
         }
       )
     )
   }
 }
+
+

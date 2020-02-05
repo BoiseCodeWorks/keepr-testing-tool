@@ -81,7 +81,7 @@
         </div>
       </div>
     </div>
-    <div v-if="actuallyReadDirections" class="row">
+    <!-- <div v-if="actuallyReadDirections" class="row">
       <div class="col-10 col-lg-6 mx-auto">
         <div v-if="!user.email">
           <form v-if="newAccount" @submit.prevent="register">
@@ -108,15 +108,13 @@
           <a @click="newAccount = false" class="mx-2">Test an existing account</a>
           <a @click="newAccount = true" class="mx-2">Create and test a new account</a>
         </div>
-        <!-- end row from line 10 -->
       </div>
       <div class="col-6 offset-lg-3 my-3" v-if="user.email">
         <h1 class="mb-2 welcome">Welcome, {{user.username}}</h1>
         <button @click="logout" class="btn btn-info">Logout</button>
       </div>
-    </div>
-
-    <div v-if="actuallyReadDirections" class="row">
+    </div>-->
+    <!-- <div v-if="actuallyReadDirections" class="row">
       <div class="col-12">
         <h1>Auth Tests</h1>
         <p>These tests use the following base URL: /account</p>
@@ -144,7 +142,7 @@
         <button class="btn btn-info mb-2" @click="testVaultKeeps">Run Tests</button>
       </div>
       <tests :tests="vaultKeepTests"></tests>
-    </div>
+    </div>-->
   </div>
 </template>
 
@@ -222,6 +220,7 @@ export default {
       this.$store.dispatch("removeUser");
     },
     openTests() {
+      this.$router.push({ name: "testRunner" });
       this.actuallyReadDirections = true;
       this.readMe = false;
     }
