@@ -22,7 +22,7 @@ export class VaultsSuite extends UtilitySuite {
         async () => {
           let vault
           try {
-            let user = await this.CheckUser()
+            let user = await this.CheckUserAsync()
             vault = await this.create({ ...vaultObj, userId: "dont trust the front end" })
             this.verifyIsSame(vaultObj, vault)
             if (vault.userId != user.id) {
@@ -35,6 +35,7 @@ export class VaultsSuite extends UtilitySuite {
             if (vault) {
               let vaults = await this.get()
               if (vaults.length > 1) {
+                // @ts-ignore
                 await this.delete(vault.id)
               }
             }
@@ -50,10 +51,10 @@ export class VaultsSuite extends UtilitySuite {
       },
         async () => {
           try {
-            let user = await this.CheckUser()
+            let user = await this.CheckUserAsync()
             let userOne = JSON.parse(localStorage.getItem('user'))
             let userTwo
-            let vaults = await this.get()
+            let vaults = await this.getVaultsAsync()
             vaults = vaults.filter(v => v.userId == user.id)
             if (vaults.length == 0) {
               return this.fail('Please add at least one vault with this user to test this route.')
@@ -87,7 +88,7 @@ export class VaultsSuite extends UtilitySuite {
       },
         async () => {
           try {
-            let user = await this.CheckUser()
+            let user = await this.CheckUserAsync()
             let vaults = await this.get()
             if (vaults.length == 0) {
               return this.fail('Please add at least one vault to test this route.')
@@ -113,7 +114,7 @@ export class VaultsSuite extends UtilitySuite {
       },
         async () => {
           try {
-            await this.CheckUser()
+            await this.CheckUserAsync()
             let userOne = JSON.parse(localStorage.getItem('user'))
             let userTwo
             let vault = await this.create(vaultObj)

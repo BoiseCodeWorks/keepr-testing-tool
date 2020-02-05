@@ -22,20 +22,23 @@ export class VaultKeepsSuite extends UtilitySuite {
         async () => {
           let vaultKeep
           try {
-            let user = await this.CheckUser()
+            let user = await this.CheckUserAsync()
+            let vaults = await this.getVaultsAsync()
+            let keeps = await this.getPublicKeepsAsync()
             vaultKeep = await this.create(vaultKeep)
             this.verifyIsSame(vaultKeepObj, vaultKeep)
             if (vaultKeep.userId != user.id) {
               return this.fail("Users can create a vault with any user id.")
             }
-            return this.pass("Successfully created a vault!", vault)
+            return this.pass("Successfully created a VaultKeep!", vaultKeep)
           } catch (e) {
-            return this.unexpected(vaultObj, this.handleError(e))
+            return this.unexpected(vaultKeepObj, this.handleError(e))
           } finally {
-            if (vault) {
+            if (vaultKeep) {
               let vaults = await this.get()
               if (vaults.length > 1) {
-                await this.delete(vault.id)
+                // @ts-ignore
+                await this.delete(vaultKeep.id)
               }
             }
           }

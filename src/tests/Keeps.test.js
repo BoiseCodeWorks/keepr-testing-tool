@@ -1,3 +1,4 @@
+// @ts-ignore
 import { Test } from "@bcwdev/vue-api-tester"
 import { UtilitySuite } from "./UtilitySuite"
 
@@ -28,7 +29,7 @@ export class KeepsSuite extends UtilitySuite {
         async () => {
           let keep
           try {
-            let user = await this.CheckUser()
+            let user = await this.CheckUserAsync()
             keep = await this.create({ ...keepObj, userId: "dont trust the front end" })
             this.verifyIsSame(keepObj, keep)
             if (keep.userId != user.id) {
@@ -39,6 +40,7 @@ export class KeepsSuite extends UtilitySuite {
             return this.unexpected(keepObj, this.handleError(e))
           } finally {
             if (keep) {
+              // @ts-ignore
               await this.delete(keep.id)
             }
           }
@@ -53,17 +55,13 @@ export class KeepsSuite extends UtilitySuite {
         async () => {
           let keeps
           try {
-            let user = await this.CheckUser()
+            // @ts-ignore
+            let user = await this.CheckUserAsync()
+            // @ts-ignore
             let keep = await this.create(keepObj)
-            this.switchUser()
-            keeps = await this.get()
-            if (keeps.length == 0) {
-              return this.fail('Please add at least one keep to test this route.')
-            }
-            else if (!keeps.every(k => !k.isPrivate || k.userId == user.id)) {
-              return this.fail("Able to retrieve private keeps that do not belong to the user.")
-            }
-            else if (!this.verifyIsSame(keepObj, keeps[0])) {
+            this.switchUserAsync()
+            keeps = await this.getPublicKeepsAsync()
+            if (!this.verifyIsSame(keepObj, keeps[0])) {
               return this.fail("Array does not contain objects that match the given Keep model")
             }
             return this.pass("Able to get keeps", keeps.splice(0, 3))
@@ -108,6 +106,7 @@ export class KeepsSuite extends UtilitySuite {
           let updatedKeep
           try {
             let newKeep = { ...keepObj }
+            // @ts-ignore
             let user = await this.get('https://localhost:5001/account/authenticate')
             keep = await this.create(newKeep)
             let editedKeep = { ...keep }
@@ -122,6 +121,7 @@ export class KeepsSuite extends UtilitySuite {
             return this.unexpected(keepObj, this.handleError(e))
           } finally {
             if (keep) {
+              // @ts-ignore
               await this.delete(keep.id)
             }
           }
@@ -166,6 +166,7 @@ export class KeepsSuite extends UtilitySuite {
           try {
             await this.create(userOne, 'https://localhost:5001/account/login')
             await this.delete(keep.id)
+            // @ts-ignore
             let unDeletedKeep = await this.getById(keep.id)
             return this.fail
           } catch (e) {
@@ -195,7 +196,6 @@ export class KeepsSuite extends UtilitySuite {
           } catch (e) {
             return this.unexpected(keep, this.handleError(e))
           }
-
         }
       )
     )
