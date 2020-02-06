@@ -38,8 +38,13 @@ export class KeepsSuite extends UtilitySuite {
               userId: "dont trust the front end"
             });
             this.verifyIsSame(keepObj, keep);
-            if (keep.userId == "dont trust the front end" || keep.userId != user.sub) {
-              return this.fail("The keep.userId differs from the logged in users id. Users can create a keep with any user id.");
+            if (
+              keep.userId == "dont trust the front end" ||
+              keep.userId != user.sub
+            ) {
+              return this.fail(
+                "The keep.userId differs from the logged in users id. Users can create a keep with any user id."
+              );
             }
             return this.pass("Successfully created a keep!", keep);
           } catch (e) {
@@ -125,7 +130,7 @@ export class KeepsSuite extends UtilitySuite {
           let updatedKeep;
           try {
             let newKeep = { ...keepObj };
-            await this.CheckUserAsync()
+            await this.CheckUserAsync();
             keep = await this.create(newKeep);
             let editedKeep = { ...keep };
             editedKeep.name = "edited keep";
@@ -152,8 +157,6 @@ export class KeepsSuite extends UtilitySuite {
           expected: "Keep"
         },
         async () => {
-          let userOne;
-          let userTwo;
           let keep;
           try {
             keep = await this.create({
@@ -162,32 +165,19 @@ export class KeepsSuite extends UtilitySuite {
               img: "//placehold.it/200x200",
               isPrivate: false
             });
-            await this.delete("logout", "https://localhost:5001/account");
-            let users = JSON.parse(localStorage.getItem("users"));
-            let index = Math.floor(Math.random() * users.length);
-            userTwo = users[index];
-            userTwo["username"] = `${userTwo.name} ${userTwo.surname}`;
-            users.splice(index, 1);
-            localStorage.setItem("users", JSON.stringify(users));
-            await this.create(
-              userTwo,
-              "https://localhost:5001/account/register"
-            );
           } catch (e) {
             return this.unexpected(keep, e.response.data);
           }
+
           try {
             await this.delete(keep.id);
-            return this.unexpected(
-              "Unable to delete keep",
-              "Users able to delete a keep they do not own."
-            );
-          } catch (e) { }
+          } catch (e) {
+            return this.fail(e.message);
+          }
+
           try {
-            await this.create(userOne, "https://localhost:5001/account/login");
-            await this.delete(keep.id);
-            let unDeletedKeep = await this.getById(keep.id);
-            return this.fail;
+            await this.getById(keep.id);
+            return this.fail("Unable to delete keep by its Id");
           } catch (e) {
             return this.pass("Sucessfully removed keep by it's Id", keep);
           }

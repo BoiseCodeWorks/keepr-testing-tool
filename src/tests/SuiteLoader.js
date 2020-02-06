@@ -3,7 +3,7 @@ import { KeepsSuite } from "./Keeps.test";
 import { UsersSuite } from "./Auth.test";
 
 export const loadTests = () => {
-  new VaultsSuite();
   new KeepsSuite();
+  new VaultsSuite();
   new UsersSuite();
 };
