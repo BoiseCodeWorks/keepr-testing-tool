@@ -1,13 +1,6 @@
-<<<<<<< HEAD
-// @ts-ignore
-import { Test } from "@bcwdev/vue-api-tester"
-import { UtilitySuite } from "./UtilitySuite"
-=======
 import { Test } from "@bcwdev/vue-api-tester";
 import { UtilitySuite } from "./UtilitySuite";
-import { onAuth, getInstance } from "@bcwdev/auth0-vue";
 import { SetAuth } from "./AuthUtility";
->>>>>>> b0fbdce2cfb1d4a1c268146a9eb88e3d156234c3
 
 const PATH = "https://localhost:5001/api/keeps";
 
@@ -38,18 +31,12 @@ export class KeepsSuite extends UtilitySuite {
         async () => {
           let keep;
           try {
-<<<<<<< HEAD
-            let user = await this.CheckUserAsync()
-            keep = await this.create({ ...keepObj, userId: "dont trust the front end" })
-            this.verifyIsSame(keepObj, keep)
-=======
             let user = await this.CheckUser();
             keep = await this.create({
               ...keepObj,
               userId: "dont trust the front end"
             });
             this.verifyIsSame(keepObj, keep);
->>>>>>> b0fbdce2cfb1d4a1c268146a9eb88e3d156234c3
             if (keep.userId != user.id) {
               return this.fail("Users can create a keep with any user id.");
             }
@@ -58,12 +45,7 @@ export class KeepsSuite extends UtilitySuite {
             return this.unexpected(keepObj, this.handleError(e));
           } finally {
             if (keep) {
-<<<<<<< HEAD
-              // @ts-ignore
-              await this.delete(keep.id)
-=======
               await this.delete(keep.id);
->>>>>>> b0fbdce2cfb1d4a1c268146a9eb88e3d156234c3
             }
           }
         }
@@ -78,18 +60,6 @@ export class KeepsSuite extends UtilitySuite {
         async () => {
           let keeps;
           try {
-<<<<<<< HEAD
-            // @ts-ignore
-            let user = await this.CheckUserAsync()
-            // @ts-ignore
-            let keep = await this.create(keepObj)
-            this.switchUserAsync()
-            keeps = await this.getPublicKeepsAsync()
-            if (!this.verifyIsSame(keepObj, keeps[0])) {
-              return this.fail("Array does not contain objects that match the given Keep model")
-            }
-            return this.pass("Able to get keeps", keeps.splice(0, 3))
-=======
             let user = await this.CheckUser();
             let keep = await this.create(keepObj);
             this.switchUser();
@@ -108,7 +78,6 @@ export class KeepsSuite extends UtilitySuite {
               );
             }
             return this.pass("Able to get keeps", keeps.splice(0, 3));
->>>>>>> b0fbdce2cfb1d4a1c268146a9eb88e3d156234c3
           } catch (e) {
             return this.unexpected([keepObj], this.handleError(e));
           }
@@ -153,16 +122,6 @@ export class KeepsSuite extends UtilitySuite {
           let keep;
           let updatedKeep;
           try {
-<<<<<<< HEAD
-            let newKeep = { ...keepObj }
-            // @ts-ignore
-            let user = await this.get('https://localhost:5001/account/authenticate')
-            keep = await this.create(newKeep)
-            let editedKeep = { ...keep }
-            editedKeep.name = "edited keep"
-            await this.update(editedKeep)
-            updatedKeep = await this.getById(editedKeep.id)
-=======
             let newKeep = { ...keepObj };
             let user = await this.get(
               "https://localhost:5001/account/authenticate"
@@ -172,7 +131,6 @@ export class KeepsSuite extends UtilitySuite {
             editedKeep.name = "edited keep";
             await this.update(editedKeep);
             updatedKeep = await this.getById(editedKeep.id);
->>>>>>> b0fbdce2cfb1d4a1c268146a9eb88e3d156234c3
             if (updatedKeep.name != editedKeep.name) {
               return this.fail("Could not edit the keep.");
             }
@@ -181,12 +139,7 @@ export class KeepsSuite extends UtilitySuite {
             return this.unexpected(keepObj, this.handleError(e));
           } finally {
             if (keep) {
-<<<<<<< HEAD
-              // @ts-ignore
-              await this.delete(keep.id)
-=======
               await this.delete(keep.id);
->>>>>>> b0fbdce2cfb1d4a1c268146a9eb88e3d156234c3
             }
           }
         }
@@ -235,18 +188,10 @@ export class KeepsSuite extends UtilitySuite {
             );
           } catch (e) {}
           try {
-<<<<<<< HEAD
-            await this.create(userOne, 'https://localhost:5001/account/login')
-            await this.delete(keep.id)
-            // @ts-ignore
-            let unDeletedKeep = await this.getById(keep.id)
-            return this.fail
-=======
             await this.create(userOne, "https://localhost:5001/account/login");
             await this.delete(keep.id);
             let unDeletedKeep = await this.getById(keep.id);
             return this.fail;
->>>>>>> b0fbdce2cfb1d4a1c268146a9eb88e3d156234c3
           } catch (e) {
             return this.pass("Sucessfully removed keep by it's Id", keep);
           }
