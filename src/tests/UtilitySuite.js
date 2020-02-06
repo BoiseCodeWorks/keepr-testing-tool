@@ -1,15 +1,16 @@
 import { Suite } from "@bcwdev/vue-api-tester"
+import { getInstance } from "@bcwdev/auth0-vue"
 
 export class UtilitySuite extends Suite {
   async CheckUserAsync() {
     try {
-      let user = await this.get('https://localhost:5001/account/authenticate')
-      if (!user) {
-        throw new Error("Bad user, try running the login test first")
+      let authInstance = await getInstance()
+      if (!authInstance.isAuthenticated) {
+        throw new Error("Not logged in, try running the login test first")
       }
-      return user
+      return authInstance.user
     } catch (e) {
-      throw new Error("Bad user, try running the login test first")
+      throw new Error("Not logged in, try running the login test first")
     }
   }
 

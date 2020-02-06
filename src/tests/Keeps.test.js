@@ -1,6 +1,7 @@
 import { Test } from "@bcwdev/vue-api-tester";
 import { UtilitySuite } from "./UtilitySuite";
 import { SetAuth } from "./AuthUtility";
+import { getInstance } from "@bcwdev/auth0-vue";
 
 const PATH = "https://localhost:5001/api/keeps";
 
@@ -31,14 +32,14 @@ export class KeepsSuite extends UtilitySuite {
         async () => {
           let keep;
           try {
-            let user = await this.CheckUser();
+            let user = await this.CheckUserAsync();
             keep = await this.create({
               ...keepObj,
               userId: "dont trust the front end"
             });
             this.verifyIsSame(keepObj, keep);
-            if (keep.userId != user.id) {
-              return this.fail("Users can create a keep with any user id.");
+            if (keep.userId == "dont trust the front end" || keep.userId != user.sub) {
+              return this.fail("The keep.userId differs from the logged in users id. Users can create a keep with any user id.");
             }
             return this.pass("Successfully created a keep!", keep);
           } catch (e) {
@@ -60,9 +61,10 @@ export class KeepsSuite extends UtilitySuite {
         async () => {
           let keeps;
           try {
-            let user = await this.CheckUser();
-            let keep = await this.create(keepObj);
-            this.switchUser();
+            let user = await this.CheckUserAsync();
+            //FIXME this wont work anymore
+            // let keep = await this.create(keepObj);
+            // this.switchUserAsync();
             keeps = await this.get();
             if (keeps.length == 0) {
               return this.fail(
@@ -123,9 +125,7 @@ export class KeepsSuite extends UtilitySuite {
           let updatedKeep;
           try {
             let newKeep = { ...keepObj };
-            let user = await this.get(
-              "https://localhost:5001/account/authenticate"
-            );
+            await this.CheckUserAsync()
             keep = await this.create(newKeep);
             let editedKeep = { ...keep };
             editedKeep.name = "edited keep";
@@ -156,10 +156,6 @@ export class KeepsSuite extends UtilitySuite {
           let userTwo;
           let keep;
           try {
-            userOne = JSON.parse(localStorage.getItem("user"));
-            if (!userOne) {
-              return this.fail("Please run the Login test first.");
-            }
             keep = await this.create({
               name: "TEST__KEEP__DELETABLE",
               description: "KEEP__DESCRIPTION_SHOULD_GET_DELETED",
@@ -186,7 +182,7 @@ export class KeepsSuite extends UtilitySuite {
               "Unable to delete keep",
               "Users able to delete a keep they do not own."
             );
-          } catch (e) {}
+          } catch (e) { }
           try {
             await this.create(userOne, "https://localhost:5001/account/login");
             await this.delete(keep.id);
