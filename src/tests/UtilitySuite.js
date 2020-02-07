@@ -19,7 +19,7 @@ export class UtilitySuite extends Suite {
     // @ts-ignore
     await authInstance.logout();
     // @ts-ignore
-    
+
     await authInstance.loginwithPopup({
       username: "JIMMY_TESTER@test.com",
       password: "testing123"
@@ -32,14 +32,6 @@ export class UtilitySuite extends Suite {
 
   handleError(e) {
     return e.response && e.response.data != "" ? e.response.data : e;
-  }
-
-  async getVaultsAsync() {
-    let vaults = await this.get("https://localhost:5001/api/vaults");
-    if (vaults.length == 0) {
-      return this.fail("Please create at least one vault with this user.");
-    }
-    return vaults;
   }
 
   async getUserKeepsAsync() {
