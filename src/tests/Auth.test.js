@@ -1,8 +1,6 @@
 import { Suite, Test } from "@bcwdev/vue-api-tester";
-import Axios from "axios";
 import { SetAuth } from "./AuthUtility";
 import { UtilitySuite } from "./UtilitySuite";
-import { getInstance } from "@bcwdev/auth0-vue";
 
 const PATH = "https://localhost:5001/api";
 const KEEPS = PATH + "/keeps";
@@ -125,25 +123,21 @@ export class UsersSuite extends UtilitySuite {
       {
         name: "Start Wrong User Auth Tests",
         path: "NONE",
-        description: "Please login as a different user to validate these tests"
+        description: "Uses the Api Test Token to validate bad user access"
       },
       async () => {
-        // let authService = getInstance();
-        // try {
-        //   alert(
-        //     // @ts-ignore
-        //     `Please Login with a new user other than ${authService.user.name}`
-        //   );
-        //   // @ts-ignore
-        //   await authService.loginWithPopup();
-        //   // @ts-ignore
-        //   await authService.getUserData();
-        //   this.request.defaults.headers.Authorization = authService.bearer;
-        //   return this.pass("Starting Wrong User Tests");
-        // } catch (e) {
-        //   return this.fail(e.message);
-        // }
-        this.pass("")
+        try {
+          let config = JSON.parse(window.localStorage.getItem("auth0:config"));
+          if (!config.apiTestToken) {
+            return this.fail("Please set you Api Test Token");
+          }
+          this.request.defaults.headers.Authorization =
+            "Bearer " + config.apiTestToken;
+
+          return this.pass("Ready to check wrong auth");
+        } catch (e) {
+          this.fail(e.message);
+        }
       }
     );
   }
@@ -161,7 +155,7 @@ export class UsersSuite extends UtilitySuite {
         try {
           await this.getById(this.privateKeep.id, KEEPS);
         } catch (e) {
-          return this.pass("can not get private keeps");
+          return this.pass("not able to get private keeps");
         }
         return this.fail("Should not be able to get private keeps");
       }
@@ -305,7 +299,7 @@ export class UsersSuite extends UtilitySuite {
       },
       async () => {
         try {
-          await this.delete(this.publicKeep, KEEPS);
+          await this.delete(this.publicKeep.id, KEEPS);
         } catch (e) {
           return this.pass(
             "not be able to delete a keep that doesnt belong to you"
@@ -328,7 +322,7 @@ export class UsersSuite extends UtilitySuite {
       },
       async () => {
         try {
-          await this.delete(this.privateKeep, KEEPS);
+          await this.delete(this.privateKeep.id, KEEPS);
         } catch (e) {
           return this.pass(
             "not be able to delete a keep that doesnt belong to you"
@@ -351,7 +345,7 @@ export class UsersSuite extends UtilitySuite {
       },
       async () => {
         try {
-          await this.delete(this.vault, VAULTS);
+          await this.delete(this.vault.id, VAULTS);
         } catch (e) {
           return this.pass(
             "not be able to delete a vault that doesnt belong to you"
@@ -366,15 +360,17 @@ export class UsersSuite extends UtilitySuite {
   DELETE_VaultKeep() {
     return new Test(
       {
-        name: "PUT VaultKeep",
-        path: "api/vaultskeeps",
+        name: "DELETE VaultKeep",
+        path: "api/vaultskeeps/:vaultId/keeps/:keepId",
         description:
           "The server should send back an error when attempting to delete a vaultkeep",
         expected: "ERROR"
       },
       async () => {
         try {
-          await this.request.put(VAULTKEEPS, this.vaultKeep);
+          await this.request.delete(
+            `${VAULTKEEPS}/${this.vaultKeep.vaultId}/keeps/${this.vaultKeep.keepId}`
+          );
         } catch (e) {
           return this.pass(
             "not be able to delete a vaultkeep that doesnt belong to you"

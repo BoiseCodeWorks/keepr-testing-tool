@@ -27,6 +27,12 @@
             class="form-control col m-1"
             v-model="auth0Config.audience"
           />
+          <input
+            type="text"
+            placeholder="API Test Token"
+            class="form-control col m-1"
+            v-model="auth0Config.apiTestToken"
+          />
         </div>
         <div class="ml-1 my-2">
           <button class="btn btn-info">Save Auth0 Config</button>
@@ -52,7 +58,8 @@ export default {
       auth0Config: {
         domain: "",
         clientId: "",
-        audience: ""
+        audience: "",
+        apiTestToken: ""
       }
     };
   },
