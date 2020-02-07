@@ -118,6 +118,10 @@ export class VaultKeepsSuite extends UtilitySuite {
           await this.delete(keeps[0].id, `https://localhost:5001/api/vaultkeeps/${vaults[0].id}/keeps`)
           vaultKeeps = await this.get(`https://localhost:5001/api/vaultkeeps/${vaults[0].id}/keeps`)
           vaultKeep = vaultKeeps.find(vk => vk.id == keeps[0].id)
+          let matchedVaultKeeps = vaultKeeps.filter(vk => vk.id == keeps[0].id)
+          if (matchedVaultKeeps.length > 1) {
+            return this.fail("The server allows adding the same keep twice to a vault.")
+          }
           if (vaultKeep) {
             return this.fail("Couldn't remove keep from vault.")
           }
