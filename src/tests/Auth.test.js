@@ -1,148 +1,389 @@
-import { Suite, Test } from "@bcwdev/vue-api-tester"
-import Axios from "axios"
+import { Suite, Test } from "@bcwdev/vue-api-tester";
+import Axios from "axios";
+import { SetAuth } from "./AuthUtility";
+import { UtilitySuite } from "./UtilitySuite";
+import { getInstance } from "@bcwdev/auth0-vue";
 
-const PATH = "https://localhost:5001/account"
+const PATH = "https://localhost:5001/api";
+const KEEPS = PATH + "/keeps";
+const VAULTS = PATH + "/vaults";
+const VAULTKEEPS = PATH + "/vaultkeeps";
 
-let userObject = {
+let privateKeep = {};
+let publicKeep = {};
+let vault = {};
+let vaultKeep = {};
 
-}
-
-export class UsersSuite extends Suite {
+export class UsersSuite extends UtilitySuite {
   constructor() {
-    super("AccountController", PATH)
+    super("Auth Checks", PATH);
+    SetAuth(this.request);
     this.addTests(
-      new Test({
-        name: "Can register a new user",
-        path: PATH + '/register',
-        description: 'Post request. This should create a new user.',
-        expected: `{
-          username: "D$",
-          email: "dmoney@momoney.com",
-        }`
-      },
-        async () => {
-          let newUser
-          let user
-          try {
-            let users = []
-            let data = localStorage.getItem('users')
-            if (!data) {
-              let res = await Axios.get("https://uinames.com/api/?amount=500&region=united states&ext")
-              users = res.data
-              localStorage.setItem('users', JSON.stringify(users))
-            } else {
-              users = JSON.parse(data)
-            }
-            let index = Math.floor(Math.random() * users.length)
-            if (users.length > 0) {
-              newUser = users[index]
-              newUser["username"] = `${newUser.name} ${newUser.surname}`
-            }
-            user = await this.create(newUser, PATH + '/register')
-            users.splice(index, 1)
-            localStorage.setItem('users', JSON.stringify(users))
-            localStorage.setItem('user', JSON.stringify(newUser))
-          } catch (e) {
-            return this.handleError(e)
-          }
-          return this.pass("Able to register a new user.", { NewUser: { username: newUser.username, email: newUser.email, password: newUser.password }, RegisteredUser: user })
-        }
-      ),
-      new Test({
-        name: "Can login as a user",
-        path: PATH + '/login',
-        description: 'Post request. This should login a registered user.',
-        expected: `{
-          username: "D$",
-          email: "dmoney@momoney.com"
-        }`
-      },
-        async () => {
-          let user
-          let currentUser = localStorage.getItem('user')
-          let UserCredentials
-          try {
-            if (!currentUser) {
-              this.fail("Run the register test first.")
-            } else {
-              UserCredentials = JSON.parse(currentUser)
-              user = await this.create(UserCredentials, PATH + '/login')
-            }
-          } catch (e) {
-            return this.unexpected("user object", e.response.data)
-          }
-          return this.pass("Able to login a registered user.", { UserCredentials, LoggedInUser: user })
-        }
-      ),
-      new Test({
-        name: "Can logout a user",
-        path: PATH + '/logout',
-        description: 'Delete request. This should logout a signed in user.',
-        expected: `true`
-      },
-        async () => {
-          try {
-            let user
-            try {
-              user = await this.get(PATH + '/authenticate')
-            } catch (e) {
-              return this.fail('Run the login test first')
-            }
-            try {
-              await this.delete('logout', PATH)
-            } catch (e) {
-              return this.fail('DELETE request to logout failed')
-            }
-            try {
-              user = await this.get(PATH + '/authenticate')
-              return this.fail('User is still logged in.')
-            } catch (e) {
-              return this.pass('Users able to logout.')
-            }
-          } catch (e) {
-            return this.unexpected("user should be able to logout.", e)
-          }
-        }
-      ),
-      new Test({
-        name: "Can Authenticate a user",
-        path: PATH + '/authenticate',
-        description: 'Get request. This should get a previously signed in user.',
-        expected: `{
-          username: "D$",
-          email: "dmoney@momoney.com"
-        }`
-      },
-        async () => {
-          let user
-          try {
-            user = await this.get(PATH + '/authenticate')
-          } catch (e) {
-            let currentUser = localStorage.getItem('user')
-            let UserCredentials
-            try {
-              if (!currentUser) {
-                this.fail("Run the register test first.")
-              } else {
-                UserCredentials = JSON.parse(currentUser)
-                await this.create(UserCredentials, PATH + '/login')
-                user = await this.get(PATH + '/authenticate')
-                return this.pass('Able to authenticate a user.')
-              }
-            } catch (e) {
-              return this.unexpected("user object", e.response.data)
-            }
-            return this.fail("Cant authenticate a user")
-          }
-        }
-      )
-    )
+      this.setupAuthChecks(),
+
+      this.startNoAuthTests(),
+
+      this.GET_PrivateKeep(),
+      this.GET_Vault(),
+      this.GET_VaultKeep(),
+      this.GET_PublicKeep(),
+
+      this.EDIT_PublicKeep(),
+      this.EDIT_PrivateKeep(),
+      this.EDIT_Vault(),
+
+      this.DELETE_PublicKeep(),
+      this.DELETE_PrivateKeep(),
+      this.DELETE_Vault(),
+      this.DELETE_VaultKeep(),
+
+      this.startWrongAuthTests(),
+
+      this.GET_PrivateKeep(),
+      this.GET_Vault(),
+      this.GET_VaultKeep(),
+      this.GET_PublicKeep(),
+
+      this.EDIT_PublicKeep(),
+      this.EDIT_PrivateKeep(),
+      this.EDIT_Vault(),
+
+      this.DELETE_PublicKeep(),
+      this.DELETE_PrivateKeep(),
+      this.DELETE_Vault(),
+      this.DELETE_VaultKeep()
+    );
   }
 
-  handleError(e) {
-    if (e.response.status == 404) {
-      return this.fail(`${e.response.data} 404: ${(e.response.config.method).toUpperCase()} request to ${e.response.config.url} `)
-    }
-    return this.unexpected({}, e.response.data)
+  setupAuthChecks() {
+    return new Test(
+      {
+        name: "Setup Auth Data",
+        path: "NONE",
+        description: "Creates all of the data necessary to test auth",
+        expected: "Creates Keep, Vault, VaultKeep"
+      },
+      async () => {
+        let privateKeep = {
+          name: "PRIVATE__KEEP",
+          description: "MY__PRIVATE__KEEP",
+          img: "//placehold.it/200x200",
+          isPrivate: true
+        };
+        let publicKeep = {
+          name: "PUBLIC__KEEP",
+          description: "MY__PUBLIC__KEEP",
+          img: "//placehold.it/200x200",
+          isPrivate: false
+        };
+        let vault = {
+          name: "MY__VAULT",
+          description: "MY__VAULT__DESCRIPTION"
+        };
+        try {
+          this.privateKeep = await this.create(privateKeep, KEEPS);
+          this.publicKeep = await this.create(publicKeep, KEEPS);
+          this.vault = await this.create(vault, VAULTS);
+        } catch (e) {
+          return this.unexpected(
+            { privateKeep, publicKeep, vault },
+            this.handleError(e)
+          );
+        }
+        let vaultKeep = {
+          vaultId: this.vault.id,
+          keepId: this.publicKeep.id
+        };
+        try {
+          await this.create(vaultKeep, VAULTKEEPS);
+          this.vaultKeep = vaultKeep;
+        } catch (e) {
+          return this.unexpected({ vaultKeep }, this.handleError(e));
+        }
+        return this.pass("Auth Check data setup correctly");
+      }
+    );
+  }
+
+  startNoAuthTests() {
+    return new Test(
+      {
+        name: "Start No Auth Tests",
+        path: "NONE",
+        description: "Removes Auth token from requests",
+        expected: "Auth to function correctly"
+      },
+      async () => {
+        delete this.request.defaults.headers.Authorization;
+        return this.pass("Auth Removed");
+      }
+    );
+  }
+
+  startWrongAuthTests() {
+    return new Test(
+      {
+        name: "Start Wrong User Auth Tests",
+        path: "NONE",
+        description: "Please login as a different user to validate these tests"
+      },
+      async () => {
+        // let authService = getInstance();
+        // try {
+        //   alert(
+        //     // @ts-ignore
+        //     `Please Login with a new user other than ${authService.user.name}`
+        //   );
+        //   // @ts-ignore
+        //   await authService.loginWithPopup();
+        //   // @ts-ignore
+        //   await authService.getUserData();
+        //   this.request.defaults.headers.Authorization = authService.bearer;
+        //   return this.pass("Starting Wrong User Tests");
+        // } catch (e) {
+        //   return this.fail(e.message);
+        // }
+        this.pass("")
+      }
+    );
+  }
+
+  GET_PrivateKeep() {
+    return new Test(
+      {
+        name: "Get Private Keep",
+        path: "api/keeps/:id",
+        description:
+          "The server should send back an error when attempting to get a private keep",
+        expected: "ERROR"
+      },
+      async () => {
+        try {
+          await this.getById(this.privateKeep.id, KEEPS);
+        } catch (e) {
+          return this.pass("can not get private keeps");
+        }
+        return this.fail("Should not be able to get private keeps");
+      }
+    );
+  }
+  GET_Vault() {
+    return new Test(
+      {
+        name: "Get Vault",
+        path: "api/vaults/:id",
+        description:
+          "The server should send back an error when attempting to get a vault",
+        expected: "ERROR"
+      },
+      async () => {
+        try {
+          await this.getById(this.vault.id, VAULTS);
+        } catch (e) {
+          return this.pass("can not get vaults that don't belong to you");
+        }
+        return this.fail("Should not be able to get vaults");
+      }
+    );
+  }
+
+  GET_VaultKeep() {
+    return new Test(
+      {
+        name: "Get VaultKeep",
+        path: "api/vaults/:id/keeps",
+        description:
+          "The server should send back an error when attempting to get a vaultkeep",
+        expected: "ERROR"
+      },
+      async () => {
+        try {
+          await this.request.get(`${VAULTS}/${this.vault.id}/keeps`);
+        } catch (e) {
+          return this.pass("can not get vault keeps that don't belong to you");
+        }
+        return this.fail("Should not be able to get vaults keep");
+      }
+    );
+  }
+
+  GET_PublicKeep() {
+    return new Test(
+      {
+        name: "Get Public Keep",
+        path: "api/keeps/:id",
+        description: "the server should allow you to get public keeps",
+        expected: this.publicKeep
+      },
+      async () => {
+        try {
+          await this.getById(this.publicKeep.id, KEEPS);
+          return this.pass("can get public keeps regardless of auth");
+        } catch (e) {
+          return this.unexpected(this.publicKeep, this.handleError(e));
+        }
+      }
+    );
+  }
+  EDIT_PublicKeep() {
+    return new Test(
+      {
+        name: "EDIT public keep",
+        path: "api/keeps/:id",
+        description:
+          "The server should send back an error when attempting to edit a keep",
+        expected: "ERROR"
+      },
+      async () => {
+        try {
+          await this.update(this.publicKeep, KEEPS);
+        } catch (e) {
+          return this.pass(
+            "not be able to edit a keep that doesnt belong to you"
+          );
+        }
+        this.fail(
+          "the server should throw an error when attempting to edit a keep that does not belong to you"
+        );
+      }
+    );
+  }
+  EDIT_PrivateKeep() {
+    return new Test(
+      {
+        name: "EDIT private keep",
+        path: "api/keeps/:id",
+        description:
+          "The server should send back an error when attempting to edit a keep",
+        expected: "ERROR"
+      },
+      async () => {
+        try {
+          await this.update(this.privateKeep, KEEPS);
+        } catch (e) {
+          return this.pass(
+            "not be able to edit a keep that doesnt belong to you regardless of private status"
+          );
+        }
+        this.fail(
+          "the server should throw an error when attempting to edit a keep that does not belong to you"
+        );
+      }
+    );
+  }
+  EDIT_Vault() {
+    return new Test(
+      {
+        name: "Edit Vault",
+        path: "api/vaults/:id",
+        description:
+          "The server should send back an error when attempting to edit a vault",
+        expected: "ERROR"
+      },
+      async () => {
+        try {
+          await this.update(this.vault, VAULTS);
+        } catch (e) {
+          return this.pass(
+            "not be able to edit a vault that doesnt belong to you"
+          );
+        }
+        this.fail(
+          "the server should throw an error when attempting to edit a vault that does not belong to you"
+        );
+      }
+    );
+  }
+  DELETE_PublicKeep() {
+    return new Test(
+      {
+        name: "DELETE Keep",
+        path: "api/keeps/:id",
+        description:
+          "The server should send back an error when attempting to delete a keep",
+        expected: "ERROR"
+      },
+      async () => {
+        try {
+          await this.delete(this.publicKeep, KEEPS);
+        } catch (e) {
+          return this.pass(
+            "not be able to delete a keep that doesnt belong to you"
+          );
+        }
+        this.fail(
+          "the server should throw an error when attempting to delete a keep that does not belong to you"
+        );
+      }
+    );
+  }
+  DELETE_PrivateKeep() {
+    return new Test(
+      {
+        name: "DELETE Keep",
+        path: "api/keeps/:id",
+        description:
+          "The server should send back an error when attempting to delete a keep",
+        expected: "ERROR"
+      },
+      async () => {
+        try {
+          await this.delete(this.privateKeep, KEEPS);
+        } catch (e) {
+          return this.pass(
+            "not be able to delete a keep that doesnt belong to you"
+          );
+        }
+        this.fail(
+          "the server should throw an error when attempting to delete a keep that does not belong to you"
+        );
+      }
+    );
+  }
+  DELETE_Vault() {
+    return new Test(
+      {
+        name: "DELETE Vault",
+        path: "api/vaults/:id",
+        description:
+          "The server should send back an error when attempting to delete a vault",
+        expected: "ERROR"
+      },
+      async () => {
+        try {
+          await this.delete(this.vault, VAULTS);
+        } catch (e) {
+          return this.pass(
+            "not be able to delete a vault that doesnt belong to you"
+          );
+        }
+        this.fail(
+          "the server should throw an error when attempting to delete a vault that does not belong to you"
+        );
+      }
+    );
+  }
+  DELETE_VaultKeep() {
+    return new Test(
+      {
+        name: "PUT VaultKeep",
+        path: "api/vaultskeeps",
+        description:
+          "The server should send back an error when attempting to delete a vaultkeep",
+        expected: "ERROR"
+      },
+      async () => {
+        try {
+          await this.request.put(VAULTKEEPS, this.vaultKeep);
+        } catch (e) {
+          return this.pass(
+            "not be able to delete a vaultkeep that doesnt belong to you"
+          );
+        }
+        this.fail(
+          "the server should throw an error when attempting to delete a vaultkeep that does not belong to you"
+        );
+      }
+    );
   }
 }

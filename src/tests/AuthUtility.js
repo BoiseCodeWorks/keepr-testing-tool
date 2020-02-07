@@ -2,7 +2,7 @@ import { getInstance, onAuth } from "@bcwdev/auth0-vue";
 
 export function SetAuth(request) {
   let authInstance = getInstance();
-  if (authInstance) {
+  if (authInstance && authInstance.bearer) {
     request.defaults.headers.Authorization = authInstance.bearer;
   } else {
     onAuth(instance => {
