@@ -58,7 +58,7 @@ export class KeepsSuite extends UtilitySuite {
           }
         }
       }
-    )
+    );
   }
 
   canCreatePrivateKeep() {
@@ -79,14 +79,14 @@ export class KeepsSuite extends UtilitySuite {
             isPrivate: true
           });
           if (!keep.isPrivate) {
-            return this.fail("Could not make a private keep")
+            return this.fail("Could not make a private keep");
           }
           return this.pass("Able to create a private keep", keep);
         } catch (e) {
           return this.unexpected(keep, this.handleError(e));
         }
       }
-    )
+    );
   }
 
 
@@ -104,10 +104,21 @@ export class KeepsSuite extends UtilitySuite {
           let user = await this.CheckUserAsync();
           keeps = await this.get();
           if (keeps.length == 0) {
-            return this.fail(
-              "Please add at least one keep to test this route."
-            );
-          } else if (!keeps.every(k => !k.isPrivate || k.userId == user.id)) {
+            try {
+              let keep = await this.create({
+                ...keepObj,
+                userId: "dont trust the front end"
+              });
+              keeps.push(keep);
+            } catch (e) {
+              return this.fail("Unable to test getting public keeps because none exist, Also unable to create a public keep to test against.");
+            }
+            if (keeps.length == 0) {
+              return this.fail(
+                "Please add at least one keep to test this route."
+              );
+            }
+          } else if (!keeps.every(k => !k.isPrivate || k.userId == user.sub)) {
             return this.fail(
               "Able to retrieve private keeps that do not belong to the user."
             );
@@ -121,7 +132,7 @@ export class KeepsSuite extends UtilitySuite {
           return this.unexpected([keepObj], this.handleError(e));
         }
       }
-    )
+    );
   }
 
   canGetKeepById() {
@@ -149,7 +160,7 @@ export class KeepsSuite extends UtilitySuite {
           return this.unexpected(keepObj, this.handleError(e));
         }
       }
-    )
+    );
   }
 
   canEditKeepById() {
@@ -184,7 +195,7 @@ export class KeepsSuite extends UtilitySuite {
           }
         }
       }
-    )
+    );
   }
 
   canDeleteKeepById() {
@@ -221,7 +232,7 @@ export class KeepsSuite extends UtilitySuite {
           return this.pass("Sucessfully removed keep by it's Id", keep);
         }
       }
-    )
+    );
   }
 
   cantEditViewsKeepsSharesUserId() {
@@ -243,11 +254,11 @@ export class KeepsSuite extends UtilitySuite {
           editedKeep.shares = 10;
           editedKeep.views = 10;
           editedKeep.keeps = 10;
-          editedKeep.userId = "Oops. You allowed the front end to change your userId"
+          editedKeep.userId = "Oops. You allowed the front end to change your userId";
 
           await this.update(editedKeep);
           updatedKeep = await this.getById(editedKeep.id);
-          console.log(updatedKeep)
+          console.log(updatedKeep);
           for (let key in updatedKeep) {
             if (updatedKeep[key] != keep[key]) {
               return this.fail(`Was able to edit the field ${key} on the keep.`);
@@ -262,6 +273,6 @@ export class KeepsSuite extends UtilitySuite {
           }
         }
       }
-    )
+    );
   }
 }

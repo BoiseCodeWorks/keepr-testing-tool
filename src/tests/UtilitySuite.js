@@ -2,6 +2,10 @@ import { Suite } from "@bcwdev/vue-api-tester";
 import { getInstance } from "@bcwdev/auth0-vue";
 
 export class UtilitySuite extends Suite {
+  constructor(name, path) {
+    super(name, path);
+    this.setCleanup(() => { });
+  }
   async CheckUserAsync() {
     try {
       let authInstance = await getInstance();
@@ -12,18 +16,6 @@ export class UtilitySuite extends Suite {
     } catch (e) {
       throw new Error("Not logged in, try running the login test first");
     }
-  }
-
-  async switchUserAsync() {
-    let authInstance = await getInstance();
-    // @ts-ignore
-    await authInstance.logout();
-    // @ts-ignore
-
-    await authInstance.loginwithPopup({
-      username: "JIMMY_TESTER@test.com",
-      password: "testing123"
-    });
   }
 
   verifyIsSame(comparedTo, compare) {

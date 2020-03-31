@@ -93,8 +93,7 @@ export class UsersSuite extends UtilitySuite {
           keepId: this.publicKeep.id
         };
         try {
-          await this.create(vaultKeep, VAULTKEEPS);
-          this.vaultKeep = vaultKeep;
+          this.vaultKeep = await this.create(vaultKeep, VAULTKEEPS);
         } catch (e) {
           return this.unexpected({ vaultKeep }, this.handleError(e));
         }
@@ -192,11 +191,15 @@ export class UsersSuite extends UtilitySuite {
       },
       async () => {
         try {
-          await this.request.get(`${VAULTS}/${this.vault.id}/keeps`);
+          let vks = await this.request.get(`${VAULTS}/${this.vault.id}/keeps`);
+          if (vks.data.length) {
+            return this.fail("Should not be able to get vaultkeeps");
+          } else {
+            throw new Error("GOOD JOB!");
+          }
         } catch (e) {
           return this.pass("can not get vault keeps that don't belong to you");
         }
-        return this.fail("Should not be able to get vaults keep");
       }
     );
   }
@@ -361,7 +364,7 @@ export class UsersSuite extends UtilitySuite {
     return new Test(
       {
         name: "DELETE VaultKeep",
-        path: "api/vaultskeeps/:vaultId/keeps/:keepId",
+        path: "api/vaultkeeps/:vaultKeepId",
         description:
           "The server should send back an error when attempting to delete a vaultkeep",
         expected: "ERROR"
@@ -369,14 +372,14 @@ export class UsersSuite extends UtilitySuite {
       async () => {
         try {
           await this.request.delete(
-            `${VAULTKEEPS}/${this.vaultKeep.vaultId}/keeps/${this.vaultKeep.keepId}`
+            `${VAULTKEEPS}/${this.vaultKeep.id}`
           );
         } catch (e) {
           return this.pass(
             "not be able to delete a vaultkeep that doesnt belong to you"
           );
         }
-        this.fail(
+        return this.fail(
           "the server should throw an error when attempting to delete a vaultkeep that does not belong to you"
         );
       }
