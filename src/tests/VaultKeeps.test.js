@@ -3,6 +3,18 @@ import { UtilitySuite } from "./UtilitySuite";
 
 const PATH = "https://localhost:5001/api/vaults";
 
+let keepObj = {
+  name: "TEST__KEEP",
+  description: "KEEP__DESCRIPTION",
+  img: "//placehold.it/200x200",
+  shares: 0,
+  views: 0,
+  keeps: 0
+};
+let vaultObj = {
+  name: "TEST__VAULT",
+  description: "VAULT__DESCRIPTION"
+}
 
 export class VaultKeepsSuite extends UtilitySuite {
   constructor() {
@@ -25,19 +37,18 @@ export class VaultKeepsSuite extends UtilitySuite {
       async () => {
         let vaultKeeps = [];
         let vaults = [];
+        let keep = {}
+        let vault = {}
         let vaultKeep;
         try {
-          let keeps = await this.get("https://localhost:5001/api/keeps");
-          vaults = await this.get("https://localhost:5001/api/vaults");
-          if (keeps.length < 1) {
-            this.fail("Please add at least one keep to test.");
-          }
-          if (vaults.length < 1) {
-            this.fail("Please add at least one vault to test.");
-          }
-
-          let created = await this.create({ keepId: keeps[0].id, vaultId: vaults[0].id, userId: "dont trust the front end" }, "https://localhost:5001/api/vaultkeeps");
-          vaultKeeps = await this.get(`https://localhost:5001/api/vaults/${vaults[0].id}/keeps`);
+          keep = await this.create({ ...keepObj }, "https://localhost:5001/api/keeps");
+          vault = vaults = await this.create({ ...vaultObj }, "https://localhost:5001/api/vaults");
+        } catch (e) {
+          return this.unexpected("Unable to create vault or", this.handleError(e));
+        }
+        try {
+          let created = await this.create({ keepId: keep.id, vaultId: vault.id, userId: "dont trust the front end" }, "https://localhost:5001/api/vaultkeeps");
+          vaultKeeps = await this.get(`https://localhost:5001/api/vaults/${vault.id}/keeps`);
           vaultKeep = vaultKeeps.find(vk => vk.vaultKeepId == created.id);
           if (vaultKeep) {
             return this.pass("Successfully created a vault keep!");
@@ -61,18 +72,17 @@ export class VaultKeepsSuite extends UtilitySuite {
       async () => {
         let vaults = [];
         let vaultKeeps;
+        let keep = {};
+        let vault = {}
         try {
-          let keeps = await this.get("https://localhost:5001/api/keeps");
-          vaults = await this.get("https://localhost:5001/api/vaults");
-          if (keeps.length < 1) {
-            this.fail("Please add at least one keep to test.");
-          }
-          if (vaults.length < 1) {
-            this.fail("Please add at least one vault to test.");
-          }
-
-          await this.create({ keepId: keeps[0].id, vaultId: vaults[0].id, userId: "dont trust the front end" }, "https://localhost:5001/api/vaultkeeps");
-          vaultKeeps = await this.get(`https://localhost:5001/api/vaults/${vaults[0].id}/keeps`);
+          keep = await this.create({ ...keepObj }, "https://localhost:5001/api/keeps");
+          vault = vaults = await this.create({ ...vaultObj }, "https://localhost:5001/api/vaults");
+        } catch (e) {
+          return this.unexpected("Unable to create vault or", this.handleError(e));
+        }
+        try {
+          await this.create({ keepId: keep.id, vaultId: vault.id, userId: "dont trust the front end" }, "https://localhost:5001/api/vaultkeeps");
+          vaultKeeps = await this.get(`https://localhost:5001/api/vaults/${vault.id}/keeps`);
           if (vaultKeeps.length < 1) {
             return this.fail('Couldnt find any vault keeps by a vault Id.');
           }
@@ -97,19 +107,19 @@ export class VaultKeepsSuite extends UtilitySuite {
         let vaultKeeps = [];
         let vaults = [];
         let vaultKeep;
+        let keep = {};
+        let vault = {}
         try {
-          let keeps = await this.get("https://localhost:5001/api/keeps");
-          vaults = await this.get("https://localhost:5001/api/vaults");
-          if (keeps.length < 1) {
-            this.fail("Please add at least one keep to test.");
-          }
-          if (vaults.length < 1) {
-            this.fail("Please add at least one vault to test.");
-          }
+          keep = await this.create({ ...keepObj }, "https://localhost:5001/api/keeps");
+          vault = vaults = await this.create({ ...vaultObj }, "https://localhost:5001/api/vaults");
+        } catch (e) {
+          return this.unexpected("Unable to create vault or", this.handleError(e));
+        }
+        try {
 
-          let vk = await this.create({ keepId: keeps[0].id, vaultId: vaults[0].id, userId: "dont trust the front end" }, "https://localhost:5001/api/vaultkeeps");
+          let vk = await this.create({ keepId: keep.id, vaultId: vault.id, userId: "dont trust the front end" }, "https://localhost:5001/api/vaultkeeps");
           await this.delete(vk.id, "https://localhost:5001/api/vaultkeeps");
-          vaultKeeps = await this.get(`https://localhost:5001/api/vaults/${vaults[0].id}/keeps`);
+          vaultKeeps = await this.get(`https://localhost:5001/api/vaults/${vault.id}/keeps`);
           vaultKeep = vaultKeeps.find(vkeep => vk.vaultKeepId == vkeep.vaultKeepId);
           if (vaultKeep) {
             return this.fail("Couldn't remove keep from vault.");

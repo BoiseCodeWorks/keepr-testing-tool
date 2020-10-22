@@ -1,7 +1,6 @@
 import { Test } from "@bcwdev/vue-api-tester";
-import { UtilitySuite } from "./UtilitySuite";
 import { SetAuth } from "./AuthUtility";
-import { getInstance } from "@bcwdev/auth0-vue";
+import { UtilitySuite } from "./UtilitySuite";
 
 const PATH = "https://localhost:5001/api/keeps";
 
@@ -22,6 +21,7 @@ export class KeepsSuite extends UtilitySuite {
       this.canCreatePublicKeep(),
       this.canGetPublicKeeps(),
       this.canGetKeepById(),
+      this.canGetPublicUserKeeps(),
       this.canEditKeepById(),
       // REVIEW do we want this?
       // this.cantEditViewsKeepsSharesUserId(),
@@ -50,10 +50,6 @@ export class KeepsSuite extends UtilitySuite {
           return this.pass("Successfully created a keep!", keep);
         } catch (e) {
           return this.unexpected(keepObj, this.handleError(e));
-        } finally {
-          if (keep) {
-            await this.delete(keep.id);
-          }
         }
       }
     );
@@ -135,6 +131,30 @@ export class KeepsSuite extends UtilitySuite {
     );
   }
 
+  canGetPublicUserKeeps() {
+    return new Test({
+      name: 'Can get Keeps by Profile Id',
+      path: PATH,
+      description: 'GET request. This should get all public Keeps for a user',
+      expected: 'Keeps[]'
+    },
+      async () => {
+        let keepToGet
+        try {
+          keepToGet = await this.create({ ...keepObj, userId: "dont trust the front end" })
+          let keeps = await this.get(`https://localhost:5001/api/profiles/${keepToGet.creatorId}/keeps`)
+          let containsKeep = keeps.find(v => v.id == keepToGet.id)
+          if (containsKeep) {
+            return this.pass("Able to get a users keeps.", [keepToGet])
+          }
+          return this.fail(`The keep with id ${keepToGet.id} was not returned in keeps`)
+        } catch (e) {
+          return this.unexpected([keepObj], this.handleError(e))
+        }
+      }
+    )
+  }
+
   canEditKeepById() {
     return new Test(
       {
@@ -161,10 +181,6 @@ export class KeepsSuite extends UtilitySuite {
           return this.pass("Successfully edited the keep!", updatedKeep);
         } catch (e) {
           return this.unexpected(keepObj, this.handleError(e));
-        } finally {
-          if (keep) {
-            await this.delete(keep.id);
-          }
         }
       }
     );

@@ -1,5 +1,5 @@
+import { getInstance } from "@bcwdev/auth0-vue";
 import { Suite } from "@bcwdev/vue-api-tester";
-import { $auth, getInstance } from "@bcwdev/auth0-vue";
 
 export class UtilitySuite extends Suite {
   constructor(name, path) {
@@ -26,6 +26,7 @@ export class UtilitySuite extends Suite {
     return e.response && e.response.data != "" ? e.response.data : e;
   }
 
+  // FIXME this will be based on user ID
   async getUserKeepsAsync() {
     let keeps = await this.get("https://localhost:5001/api/keeps/user");
     if (keeps.length == 0) {

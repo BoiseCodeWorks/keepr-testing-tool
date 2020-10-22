@@ -14,6 +14,7 @@ export class VaultsSuite extends UtilitySuite {
     this.addTests(
       this.canCreateVault(),
       this.canGetVaultById(),
+      this.canGetPublicUserVaults(),
       this.canDeleteVault()
     )
   }
@@ -34,14 +35,6 @@ export class VaultsSuite extends UtilitySuite {
           return this.pass("Successfully created a vault!", vault)
         } catch (e) {
           return this.unexpected(vaultObj, this.handleError(e))
-        } finally {
-          if (vault) {
-            let vaults = await this.get()
-            if (vaults.length > 1) {
-              // @ts-ignore
-              await this.delete(vault.id)
-            }
-          }
         }
       }
     )
@@ -56,12 +49,10 @@ export class VaultsSuite extends UtilitySuite {
       payload: `Vault { }`
     },
       async () => {
+        let vaultToGet
         try {
-          let vaults = await this.get("https://localhost:5001/api/vaults");
-          if (vaults.length < 1) {
-            return this.fail('Please create at least one vault to test this route.')
-          }
-          let vault = await this.getById(vaults[0].id)
+          vaultToGet = await this.create({ ...vaultObj, userId: "dont trust the front end" })
+          let vault = await this.getById(vaultToGet.id)
           return this.pass("Able to get a users vault by its id.", vault)
         } catch (e) {
           return this.unexpected([vaultObj], this.handleError(e))
@@ -70,6 +61,30 @@ export class VaultsSuite extends UtilitySuite {
     )
   }
 
+
+  canGetPublicUserVaults() {
+    return new Test({
+      name: 'Can get Vaults by Profile Id',
+      path: PATH,
+      description: 'GET request. This should get all public vaults for a user',
+      expected: 'Vault'
+    },
+      async () => {
+        let vaultToGet
+        try {
+          vaultToGet = await this.create({ ...vaultObj, userId: "dont trust the front end" })
+          let vaults = await this.get(`https://localhost:5001/api/profiles/${vaultToGet.creatorId}/vaults`)
+          let containsVault = vaults.find(v => v.id == vaultToGet.id)
+          if (containsVault) {
+            return this.pass("Able to get a users vaults.", [vaultToGet])
+          }
+          return this.fail(`The vault with id ${vaultToGet.id} was not returned in vaults`)
+        } catch (e) {
+          return this.unexpected([vaultObj], this.handleError(e))
+        }
+      }
+    )
+  }
 
   canDeleteVault() {
     return new Test({

@@ -1,4 +1,4 @@
-import { Suite, Test } from "@bcwdev/vue-api-tester";
+import { Test } from "@bcwdev/vue-api-tester";
 import { SetAuth } from "./AuthUtility";
 import { UtilitySuite } from "./UtilitySuite";
 
@@ -18,36 +18,38 @@ export class UsersSuite extends UtilitySuite {
     SetAuth(this.request);
     this.addTests(
       this.setupAuthChecks(),
-
+      // SECTION No Auth Tests
       this.startNoAuthTests(),
 
-      this.GET_PrivateKeep(),
+      this.GET_PrivateVault(),
       this.GET_Vault(),
-      this.GET_VaultKeep(),
+      this.GET_VaultKeeps(),
       this.GET_PublicKeep(),
+      this.GET_PublicKeeps(),
+
+      this.CREATE_VaultKeep(),
 
       this.EDIT_PublicKeep(),
-      this.EDIT_PrivateKeep(),
       this.EDIT_Vault(),
 
       this.DELETE_PublicKeep(),
-      this.DELETE_PrivateKeep(),
       this.DELETE_Vault(),
       this.DELETE_VaultKeep(),
-
+      // SECTION Wrong Auth Tests
       this.startWrongAuthTests(),
 
-      this.GET_PrivateKeep(),
+      this.GET_PrivateVault(),
       this.GET_Vault(),
-      this.GET_VaultKeep(),
+      this.GET_VaultKeeps(),
       this.GET_PublicKeep(),
+      this.GET_PublicKeeps(),
+
+      this.CREATE_VaultKeep(),
 
       this.EDIT_PublicKeep(),
-      this.EDIT_PrivateKeep(),
       this.EDIT_Vault(),
 
       this.DELETE_PublicKeep(),
-      this.DELETE_PrivateKeep(),
       this.DELETE_Vault(),
       this.DELETE_VaultKeep()
     );
@@ -62,12 +64,6 @@ export class UsersSuite extends UtilitySuite {
         expected: "Creates Keep, Vault, VaultKeep"
       },
       async () => {
-        let privateKeep = {
-          name: "PRIVATE__KEEP",
-          description: "MY__PRIVATE__KEEP",
-          img: "//placehold.it/200x200",
-          isPrivate: true
-        };
         let publicKeep = {
           name: "PUBLIC__KEEP",
           description: "MY__PUBLIC__KEEP",
@@ -78,10 +74,15 @@ export class UsersSuite extends UtilitySuite {
           name: "MY__VAULT",
           description: "MY__VAULT__DESCRIPTION"
         };
+        let privateVault = {
+          name: "MY__VAULT",
+          description: "MY__VAULT__DESCRIPTION",
+          isPrivate: true
+        };
         try {
-          this.privateKeep = await this.create(privateKeep, KEEPS);
           this.publicKeep = await this.create(publicKeep, KEEPS);
           this.vault = await this.create(vault, VAULTS);
+          this.privateVault = await this.create(privateVault, VAULTS);
         } catch (e) {
           return this.unexpected(
             { privateKeep, publicKeep, vault },
@@ -141,57 +142,58 @@ export class UsersSuite extends UtilitySuite {
     );
   }
 
-  GET_PrivateKeep() {
-    return new Test(
-      {
-        name: "Get Private Keep",
-        path: "api/keeps/:id",
-        description:
-          "The server should send back an error when attempting to get a private keep",
-        expected: "ERROR"
-      },
-      async () => {
-        try {
-          await this.getById(this.privateKeep.id, KEEPS);
-        } catch (e) {
-          return this.pass("not able to get private keeps");
-        }
-        return this.fail("Should not be able to get private keeps");
-      }
-    );
-  }
   GET_Vault() {
     return new Test(
       {
         name: "Get Vault",
         path: "api/vaults/:id",
         description:
-          "The server should send back an error when attempting to get a vault",
+          "The server should send back a vault, even if it is not yours",
         expected: "ERROR"
       },
       async () => {
         try {
           await this.getById(this.vault.id, VAULTS);
         } catch (e) {
-          return this.pass("can not get vaults that don't belong to you");
+          return this.fail("Should be able to get vaults");
         }
-        return this.fail("Should not be able to get vaults");
+        return this.pass("can get vaults that don't belong to you");
+      }
+    );
+  }
+  GET_PrivateVault() {
+    return new Test(
+      {
+        name: "Get Private Vault",
+        path: "api/vaults/:id",
+        description:
+          "The server should send back an error when attempting to get a private vault",
+        expected: "ERROR"
+      },
+      async () => {
+        let res;
+        try {
+          res = await this.getById(this.privateVault.id, VAULTS);
+        } catch (e) {
+          return this.pass("not able to get private vaults");
+        }
+        return this.unexpected("Should not be able to get private vaults", res);
       }
     );
   }
 
-  GET_VaultKeep() {
+  GET_VaultKeeps() {
     return new Test(
       {
-        name: "Get VaultKeep",
+        name: "Get VaultKeeps",
         path: "api/vaults/:id/keeps",
         description:
-          "The server should send back an error when attempting to get a vaultkeep",
+          "The server should send back an error when attempting to get a vaultkeep from a private vault",
         expected: "ERROR"
       },
       async () => {
         try {
-          let vks = await this.request.get(`${VAULTS}/${this.vault.id}/keeps`);
+          let vks = await this.request.get(`${VAULTS}/${this.privateVault.id}/keeps`);
           if (vks.data.length) {
             return this.fail("Should not be able to get vaultkeeps");
           } else {
@@ -203,11 +205,29 @@ export class UsersSuite extends UtilitySuite {
       }
     );
   }
+  GET_PublicKeeps() {
+    return new Test(
+      {
+        name: "Get Keeps",
+        path: "api/keeps",
+        description: "the server should allow you to get keeps",
+        expected: this.publicKeep
+      },
+      async () => {
+        try {
+          await this.get(KEEPS);
+          return this.pass("can get public keeps regardless of auth");
+        } catch (e) {
+          return this.unexpected(this.publicKeep, this.handleError(e));
+        }
+      }
+    )
+  }
 
   GET_PublicKeep() {
     return new Test(
       {
-        name: "Get Public Keep",
+        name: "Get Keep By Id",
         path: "api/keeps/:id",
         description: "the server should allow you to get public keeps",
         expected: this.publicKeep
@@ -222,10 +242,36 @@ export class UsersSuite extends UtilitySuite {
       }
     );
   }
+
+  CREATE_VaultKeep() {
+    return new Test(
+      {
+        name: "CREATE vaultkeep",
+        path: "api/vaultkeeps",
+        description:
+          "The server should send back an error when attempting to add a keep to a vault you do not own",
+        expected: "ERROR"
+      },
+      async () => {
+        try {
+          await this.create({ keepId: this.publicKeep.id, vaultId: this.vault.id }, VAULTKEEPS);
+        } catch (e) {
+          return this.pass(
+            "not be able to add a keep to a vault that doesnt belong to you"
+          );
+        }
+        this.fail(
+          "the server should throw an error when attempting to add a keep to a vault that does not belong to you"
+        );
+      }
+    );
+  }
+
+
   EDIT_PublicKeep() {
     return new Test(
       {
-        name: "EDIT public keep",
+        name: "EDIT keep",
         path: "api/keeps/:id",
         description:
           "The server should send back an error when attempting to edit a keep",
@@ -245,36 +291,13 @@ export class UsersSuite extends UtilitySuite {
       }
     );
   }
-  EDIT_PrivateKeep() {
-    return new Test(
-      {
-        name: "EDIT private keep",
-        path: "api/keeps/:id",
-        description:
-          "The server should send back an error when attempting to edit a keep",
-        expected: "ERROR"
-      },
-      async () => {
-        try {
-          await this.update(this.privateKeep, KEEPS);
-        } catch (e) {
-          return this.pass(
-            "not be able to edit a keep that doesnt belong to you regardless of private status"
-          );
-        }
-        this.fail(
-          "the server should throw an error when attempting to edit a keep that does not belong to you"
-        );
-      }
-    );
-  }
   EDIT_Vault() {
     return new Test(
       {
         name: "Edit Vault",
         path: "api/vaults/:id",
         description:
-          "The server should send back an error when attempting to edit a vault",
+          "The server should send back an error when attempting to edit a vault you don't own",
         expected: "ERROR"
       },
       async () => {
@@ -303,29 +326,6 @@ export class UsersSuite extends UtilitySuite {
       async () => {
         try {
           await this.delete(this.publicKeep.id, KEEPS);
-        } catch (e) {
-          return this.pass(
-            "not be able to delete a keep that doesnt belong to you"
-          );
-        }
-        this.fail(
-          "the server should throw an error when attempting to delete a keep that does not belong to you"
-        );
-      }
-    );
-  }
-  DELETE_PrivateKeep() {
-    return new Test(
-      {
-        name: "DELETE Keep",
-        path: "api/keeps/:id",
-        description:
-          "The server should send back an error when attempting to delete a keep",
-        expected: "ERROR"
-      },
-      async () => {
-        try {
-          await this.delete(this.privateKeep.id, KEEPS);
         } catch (e) {
           return this.pass(
             "not be able to delete a keep that doesnt belong to you"

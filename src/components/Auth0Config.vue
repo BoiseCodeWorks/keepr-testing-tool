@@ -27,12 +27,18 @@
             class="form-control col m-1"
             v-model="auth0Config.audience"
           />
-          <input
-            type="text"
-            placeholder="API Test Token"
-            class="form-control col m-1"
-            v-model="auth0Config.apiTestToken"
-          />
+          <div class="form-group col m-1 border-left border-white">
+            <input
+              type="text"
+              placeholder="Alternate Tester Token*"
+              class="form-control"
+              v-model="auth0Config.apiTestToken"
+            />
+            <small class="form-text text-light">
+              *Must be a different user than logged in user (use incognito
+              mode)</small
+            >
+          </div>
         </div>
         <div class="ml-1 my-2">
           <button class="btn btn-info">Save Auth0 Config</button>

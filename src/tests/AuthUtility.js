@@ -7,7 +7,7 @@ export async function SetAuth(request) {
   } else {
     onAuth(async instance => {
       request.defaults.headers.Authorization = instance.bearer;
-      await request.get("https://localhost:5001/api/profile")
+      await request.get("https://localhost:5001/api/profiles")
     });
   }
 }
