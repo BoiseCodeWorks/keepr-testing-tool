@@ -1,5 +1,5 @@
 import { Suite } from "@bcwdev/vue-api-tester";
-import { getInstance } from "@bcwdev/auth0-vue";
+import { $auth, getInstance } from "@bcwdev/auth0-vue";
 
 export class UtilitySuite extends Suite {
   constructor(name, path) {
@@ -12,7 +12,7 @@ export class UtilitySuite extends Suite {
       if (!authInstance.isAuthenticated) {
         throw new Error("Not logged in, try running the login test first");
       }
-      return authInstance.user;
+      return authInstance.userInfo;
     } catch (e) {
       throw new Error("Not logged in, try running the login test first");
     }

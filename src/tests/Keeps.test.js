@@ -9,7 +9,6 @@ let keepObj = {
   name: "TEST__KEEP",
   description: "KEEP__DESCRIPTION",
   img: "//placehold.it/200x200",
-  isPrivate: false,
   shares: 0,
   views: 0,
   keeps: 0
@@ -21,7 +20,6 @@ export class KeepsSuite extends UtilitySuite {
     SetAuth(this.request);
     this.addTests(
       this.canCreatePublicKeep(),
-      this.canCreatePrivateKeep(),
       this.canGetPublicKeeps(),
       this.canGetKeepById(),
       this.canEditKeepById(),
@@ -39,14 +37,14 @@ export class KeepsSuite extends UtilitySuite {
         description:
           "POST request. This should create a new public keep in your database.",
         expected: "Keep",
-        payload: "Keep object {name, description, img, isPrivate}"
+        payload: "Keep object { name, description, img }"
       },
       async () => {
         let keep;
         try {
           keep = await this.create({
             ...keepObj,
-            userId: "dont trust the front end"
+            creatorId: "dont trust the front end"
           });
           this.verifyIsSame(keepObj, keep);
           return this.pass("Successfully created a keep!", keep);
@@ -61,35 +59,6 @@ export class KeepsSuite extends UtilitySuite {
     );
   }
 
-  canCreatePrivateKeep() {
-    return new Test(
-      {
-        name: "Can create Private keeps",
-        path: PATH,
-        description: "POST request. This should create a new public keep in your database.",
-        expected: "Keep"
-      },
-      async () => {
-        let keep;
-        try {
-          keep = await this.create({
-            name: "TEST__KEEP__PRIVATE",
-            description: "KEEP__SHOULD_BE_PRIVATE",
-            img: "//placehold.it/200x200",
-            isPrivate: true
-          });
-          if (!keep.isPrivate) {
-            return this.fail("Could not make a private keep");
-          }
-          return this.pass("Able to create a private keep", keep);
-        } catch (e) {
-          return this.unexpected(keep, this.handleError(e));
-        }
-      }
-    );
-  }
-
-
   canGetPublicKeeps() {
     return new Test(
       {
@@ -100,15 +69,18 @@ export class KeepsSuite extends UtilitySuite {
       },
       async () => {
         let keeps;
+        let testKeepObj;
         try {
           let user = await this.CheckUserAsync();
           keeps = await this.get();
+          testKeepObj = { ...keepObj, creator: null, creatorId: null }
           if (keeps.length == 0) {
             try {
               let keep = await this.create({
                 ...keepObj,
-                userId: "dont trust the front end"
+                creatorId: "dont trust the front end"
               });
+              testKeepObj = { ...keepObj, creator: keep.creator, creatorId: user.id }
               keeps.push(keep);
             } catch (e) {
               return this.fail("Unable to test getting public keeps because none exist, Also unable to create a public keep to test against.");
@@ -118,11 +90,11 @@ export class KeepsSuite extends UtilitySuite {
                 "Please add at least one keep to test this route."
               );
             }
-          } else if (!keeps.every(k => !k.isPrivate || k.userId == user.sub)) {
+          } else if (!keeps.every(k => !k.isPrivate || k.creatorId == user.id)) {
             return this.fail(
               "Able to retrieve private keeps that do not belong to the user."
             );
-          } else if (!this.verifyIsSame(keepObj, keeps[0])) {
+          } else if (!this.verifyIsSame(testKeepObj, keeps[0])) {
             return this.fail(
               "Array does not contain objects that match the given Keep model."
             );

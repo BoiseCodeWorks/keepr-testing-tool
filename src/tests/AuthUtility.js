@@ -1,12 +1,13 @@
-import { getInstance, onAuth } from "@bcwdev/auth0-vue";
+import { getInstance, onAuth } from '@bcwdev/auth0-vue';
 
-export function SetAuth(request) {
+export async function SetAuth(request) {
   let authInstance = getInstance();
   if (authInstance && authInstance.bearer) {
     request.defaults.headers.Authorization = authInstance.bearer;
   } else {
-    onAuth(instance => {
+    onAuth(async instance => {
       request.defaults.headers.Authorization = instance.bearer;
+      await request.get("https://localhost:5001/api/profile")
     });
   }
 }
