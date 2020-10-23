@@ -65,7 +65,7 @@ export class VaultsSuite extends UtilitySuite {
   canGetPublicUserVaults() {
     return new Test({
       name: 'Can get Vaults by Profile Id',
-      path: PATH,
+      path: 'https://localhost:5001/api/profile/:id/vaults',
       description: 'GET request. This should get all public vaults for a user',
       expected: 'Vault'
     },

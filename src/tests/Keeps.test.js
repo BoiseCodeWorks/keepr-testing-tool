@@ -134,7 +134,7 @@ export class KeepsSuite extends UtilitySuite {
   canGetPublicUserKeeps() {
     return new Test({
       name: 'Can get Keeps by Profile Id',
-      path: PATH,
+      path: 'https://localhost:5001/api/profile/:id/keeps,
       description: 'GET request. This should get all public Keeps for a user',
       expected: 'Keeps[]'
     },
