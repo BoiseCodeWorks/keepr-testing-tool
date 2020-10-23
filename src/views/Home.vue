@@ -25,29 +25,32 @@
             <p>
               Please read the following directions before beginning your tests:
             </p>
-            <ul class="text-left">
+            <ul class="text-left container">
               <li class="my-2">
                 <strong>OPEN YOUR INSPECTOR TOOLS</strong>
               </li>
               <li class="my-2">
-                Create a user. When you create a user, it will test all of your
-                auth routes.
+                Create a user in an incognito window (ex: Jimmy Tester, J@j.com,
+                Testing123) with the same Auth0 Config you are using (you should
+                be able to do this from the start of the application after
+                adding your auth0 credentials). Grab the token from the network
+                tab to add to the "Configure Auth0" at the top of this page.
               </li>
               <li class="my-2">
-                After you create your first user successfully, you will be able
-                to use the "test an existing account" option
+                After adding all your credentials to this page as well, login
+                with a user other than the one you created the first token with.
               </li>
               <li class="my-2">
-                Next, test your Keep controller. When you press 'run tests' it
-                will create a waterfall effect. Each time a test is successful,
-                it will invoke the next test.
-                <strong>
-                  If a test fails, the next tests will not run.
-                </strong>
-                This means that if you pass the first test and the remaining
-                tests stay red, that does not mean that all of them are broken;
-                it means that the next test in the line did not pass so the
-                remaining tests were not run.
+                When you press 'run tests' it will create a waterfall effect.
+                Each time a test is successful, it will invoke the next test. If
+                a test fails, the next test may pass, however this is not a
+                certainty as some tests are checking to insure failure (Auth
+                Tests)
+              </li>
+              <li class="my-2">
+                It is encouraged to work on one collection at a time, try to not
+                spend an excessive amount of time on one or two tests, this can
+                slow you down and cost you important time.
               </li>
               <li>
                 When you are ready to view the tests and begin testing, click on
@@ -56,7 +59,9 @@
               </li>
               <li class="my-2">
                 Be sure to read your error messages in the console if a test
-                does not pass.
+                does not pass. Again some tests will pass with errors, this is
+                intentional as there are times your server should throw an error
+                ex: Trying to delete data you did not create.
               </li>
             </ul>
           </div>

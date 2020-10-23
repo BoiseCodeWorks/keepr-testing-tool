@@ -47,7 +47,7 @@ export default {
     },
     async logout() {
       await this.$auth.logout({
-        returnTo: window.location.host
+        returnTo: window.location.origin
       });
       ApiTester.TestRunner.ClearSuites();
     }

@@ -133,7 +133,7 @@ export class UsersSuite extends UtilitySuite {
           }
           this.request.defaults.headers.Authorization =
             "Bearer " + config.apiTestToken;
-
+          // await this.get(PATH + "/profiles")
           return this.pass("Ready to check wrong auth");
         } catch (e) {
           this.fail(e.message);
@@ -149,7 +149,7 @@ export class UsersSuite extends UtilitySuite {
         path: "api/vaults/:id",
         description:
           "The server should send back a vault, even if it is not yours",
-        expected: "ERROR"
+        expected: "Vault"
       },
       async () => {
         try {
@@ -157,7 +157,7 @@ export class UsersSuite extends UtilitySuite {
         } catch (e) {
           return this.fail("Should be able to get vaults");
         }
-        return this.pass("can get vaults that don't belong to you");
+        return this.pass("can't get vaults that don't belong to you");
       }
     );
   }
