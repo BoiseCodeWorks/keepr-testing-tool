@@ -149,7 +149,7 @@ export class UsersSuite extends UtilitySuite {
         path: "api/vaults/:id",
         description:
           "The server should send back a vault, even if it is not yours",
-        expected: "ERROR"
+        expected: "Vault"
       },
       async () => {
         try {
