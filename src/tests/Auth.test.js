@@ -67,8 +67,7 @@ export class UsersSuite extends UtilitySuite {
         let publicKeep = {
           name: "PUBLIC__KEEP",
           description: "MY__PUBLIC__KEEP",
-          img: "//placehold.it/200x200",
-          isPrivate: false
+          img: "//placehold.it/200x200"
         };
         let vault = {
           name: "MY__VAULT",
@@ -85,7 +84,7 @@ export class UsersSuite extends UtilitySuite {
           this.privateVault = await this.create(privateVault, VAULTS);
         } catch (e) {
           return this.unexpected(
-            { privateKeep, publicKeep, vault },
+            { privateVault, publicKeep, vault },
             this.handleError(e)
           );
         }
@@ -133,7 +132,6 @@ export class UsersSuite extends UtilitySuite {
           }
           this.request.defaults.headers.Authorization =
             "Bearer " + config.apiTestToken;
-          // await this.get(PATH + "/profiles")
           return this.pass("Ready to check wrong auth");
         } catch (e) {
           this.fail(e.message);
